@@ -12,7 +12,7 @@ use serde::{de, ser};
 #[cfg(feature = "serde-json")]
 use serde_json::Error as SerdeJSONError;
 
-use crate::{check_status, sys, Status};
+use crate::{check_status, sys, Status, bindgen_prelude::ToNapiValue};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -33,6 +33,12 @@ unsafe impl Send for Error {}
 unsafe impl Sync for Error {}
 
 impl error::Error for Error {}
+
+impl ToNapiValue for Error{
+    unsafe fn to_napi_value(env: sys::napi_env, val: Self) -> Result<sys::napi_value> {
+      Ok(unsafe{JsError(val).into_value(env)})
+    }
+}
 
 #[cfg(feature = "serde-json")]
 impl ser::Error for Error {
@@ -248,6 +254,24 @@ impl_object_methods!(JsTypeError, sys::napi_create_type_error);
 impl_object_methods!(JsRangeError, sys::napi_create_range_error);
 #[cfg(feature = "experimental")]
 impl_object_methods!(JsSyntaxError, sys::node_api_create_syntax_error);
+
+impl ToNapiValue for JsError{
+    unsafe fn to_napi_value(env: sys::napi_env, val: Self) -> Result<sys::napi_value> {
+        Ok(unsafe{val.into_value(env)})
+    }
+}
+
+impl ToNapiValue for JsTypeError{
+    unsafe fn to_napi_value(env: sys::napi_env, val: Self) -> Result<sys::napi_value> {
+        Ok(unsafe{val.into_value(env)})
+    }
+}
+
+impl ToNapiValue for JsRangeError{
+    unsafe fn to_napi_value(env: sys::napi_env, val: Self) -> Result<sys::napi_value> {
+        Ok(unsafe{val.into_value(env)})
+    }
+}
 
 #[doc(hidden)]
 #[macro_export]
