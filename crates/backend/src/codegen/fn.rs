@@ -77,7 +77,8 @@ impl TryToTokens for NapiFn {
       ) -> napi::bindgen_prelude::sys::napi_value {
         unsafe {
           #function_call.unwrap_or_else(|e| {
-            napi::bindgen_prelude::JsError::from(e).throw_into(env);
+            let raw = napi::bindgen_prelude::JsError::from(e).into_value(env);
+            napi::bindgen_prelude::sys::napi_throw(env, raw);
             std::ptr::null_mut::<napi::bindgen_prelude::sys::napi_value__>()
           })
         }
@@ -270,7 +271,8 @@ impl NapiFn {
             match #ret {
               Ok(value) => napi::bindgen_prelude::ToNapiValue::to_napi_value(env, value),
               Err(err) => {
-                napi::bindgen_prelude::JsError::from(err).throw_into(env);
+                let value = napi::bindgen_prelude::ToNapiValue::to_napi_value(env, err).unwrap();
+                napi::bindgen_prelude::sys::napi_throw(env, value);
                 Ok(std::ptr::null_mut())
               },
             }
