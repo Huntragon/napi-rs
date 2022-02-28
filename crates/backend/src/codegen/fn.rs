@@ -77,9 +77,9 @@ impl TryToTokens for NapiFn {
       ) -> napi::bindgen_prelude::sys::napi_value {
         unsafe {
           #function_call.unwrap_or_else(|e| {
-            let raw = napi::bindgen_prelude::JsError::from(e).into_value(env);
-            napi::bindgen_prelude::sys::napi_throw(env, raw);
-            std::ptr::null_mut::<napi::bindgen_prelude::sys::napi_value__>()
+            let value = napi::bindgen_prelude::ToNapiValue::to_napi_value(env, e).unwrap();
+            napi::bindgen_prelude::sys::napi_throw(env, value);
+            std::ptr::null_mut()
           })
         }
       }
@@ -249,7 +249,16 @@ impl NapiFn {
       let is_return_self = ty_string == "& Self" || ty_string == "&mut Self";
       if self.kind == FnKind::Constructor {
         if self.is_ret_result {
-          quote! { cb.construct(#js_name, #ret?) }
+          quote! {
+            match #ret {
+              Ok(value) => cb.construct(#js_name, value),
+              Err(err) => {
+                let value = napi::bindgen_prelude::ToNapiValue::to_napi_value(env, err).unwrap();
+                napi::bindgen_prelude::sys::napi_throw(env, value);
+                Ok(std::ptr::null_mut())
+              }
+            }
+          }
         } else {
           quote! { cb.construct(#js_name, #ret) }
         }
