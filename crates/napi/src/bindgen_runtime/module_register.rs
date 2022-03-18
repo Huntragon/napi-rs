@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::ffi::CStr;
 use std::ptr;
 use std::sync::atomic::{AtomicPtr, AtomicUsize, Ordering};
-
+use std::os::raw::c_void;
 use lazy_static::lazy_static;
 
 use crate::{
